@@ -1,0 +1,28 @@
+name: Fetch Google Flights Data
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # Esegue ogni giorno alle 06:00 UTC
+  workflow_dispatch:  # Permette esecuzione manuale
+
+jobs:
+  fetch-flights:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install pandas gspread oauth2client serpapi
+
+      - name: Run flight search script
+        env:
+          GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
+        run: python call_api.py
