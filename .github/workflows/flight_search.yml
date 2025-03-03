@@ -2,7 +2,7 @@ name: Fetch Google Flights Data
 
 on:
   schedule:
-    - cron: "0 6 * * *"  # Esegue ogni giorno alle 06:00 UTC
+    - cron: "0 8-20/2 * * *" # Esegue ogni 2 ore tra le 08:00 e le 20:00 UTC
   workflow_dispatch:  # Permette esecuzione manuale
 
 jobs:
@@ -25,4 +25,10 @@ jobs:
       - name: Run flight search script
         env:
           GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
-        run: python call_api.py
+        run: |
+          hour=$(( RANDOM % 12 + 8 ))   # Ora casuale tra 08:00 e 20:00
+          minute=$(( RANDOM % 60 ))     # Minuto casuale tra 0 e 59
+          sleep_time=$(( hour * 3600 + minute * 60 ))
+          echo "Waiting for $sleep_time seconds before execution..."
+          sleep $sleep_time
+          python call_api.py
