@@ -31,7 +31,7 @@ def save_flights_to_google_sheets(results, sheet_name="Flights Data"):
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
     client = gspread.authorize(creds)
     
-    spreadsheet = client.open("Your Google Sheet Name")
+    spreadsheet = client.open("Flights Data")
     worksheet = spreadsheet.worksheet(sheet_name)
     
     flights_data = [[
