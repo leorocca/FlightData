@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pandas gspread oauth2client serpapi
+          pip install pandas gspread oauth2client serpapi google-search-results
 
       - name: Run flight search script
         env:
