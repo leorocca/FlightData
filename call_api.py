@@ -25,13 +25,13 @@ def search_flights():
     results = search.get_dict()
     return results
 
-def save_flights_to_google_sheets(results, sheet_name="Flights Data"):
+def save_flights_to_google_sheets(results, sheet_name="FlightsData"):
     creds_json = json.loads(os.getenv("GOOGLE_SHEETS_CREDENTIALS"))
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
     client = gspread.authorize(creds)
     
-    spreadsheet = client.open("Flights Data")
+    spreadsheet = client.open("FlightsData")
     worksheet = spreadsheet.worksheet(sheet_name)
     
     flights_data = [[
