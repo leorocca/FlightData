@@ -28,7 +28,7 @@ jobs:
         run: |
           hour=$(( RANDOM % 12 + 8 ))   # Ora casuale tra 08:00 e 20:00
           minute=$(( RANDOM % 60 ))     # Minuto casuale tra 0 e 59
-          # sleep_time=$(( hour * 3600 + minute * 60 ))
-          # echo "Waiting for $sleep_time seconds before execution..."
-          # sleep $sleep_time
+          sleep_time=$(( hour * 3600 + minute * 60 ))
+          echo "Waiting for $sleep_time seconds before execution..."
+          sleep $sleep_time
           python call_api.py
