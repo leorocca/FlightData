@@ -1,13 +1,14 @@
 import os
 import json
-import pandas as pd
 import gspread
+import time
+from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 from serpapi import GoogleSearch
 
 def search_flights():
     params = {
-        "api_key": "9ecd0d88d36b62002fef347438388c8d9e42b06f2baee9935f36cb5d3e66093f",
+        "api_key": os.getenv("SERPAPI_KEY"),  # Usa variabile d'ambiente per sicurezza
         "engine": "google_flights",
         "hl": "it",
         "departure_id": "MXP",
@@ -21,45 +22,56 @@ def search_flights():
         "adults": "2"
     }
     
-    search = GoogleSearch(params)
-    results = search.get_dict()
-    return results
+    try:
+        search = GoogleSearch(params)
+        results = search.get_dict()
+        return results
+    except Exception as e:
+        print(f"Errore nella ricerca dei voli: {e}")
+        return None
 
 def save_flights_to_google_sheets(results, sheet_name="FlightsData"):
-    creds_json = json.loads(os.getenv("GOOGLE_SHEETS_CREDENTIALS"))
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
-    client = gspread.authorize(creds)
+    if not results:
+        print("Nessun risultato da salvare.")
+        return
     
-    spreadsheet = client.open("FlightsData")
-    worksheet = spreadsheet.worksheet(sheet_name)
+    try:
+        creds_json = json.loads(os.getenv("GOOGLE_SHEETS_CREDENTIALS"))
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
+        client = gspread.authorize(creds)
+        
+        spreadsheet = client.open("FlightsData")
+        worksheet = spreadsheet.worksheet(sheet_name)
+        
+        flights_data = []
+        
+        for flight_option in results.get("other_flights", []):
+            for flight in flight_option.get("flights", []):
+                flights_data.append([
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # Timestamp
+                    flight.get("departure_airport", {}).get("name", "N/A"),
+                    flight.get("departure_airport", {}).get("time", "N/A"),
+                    flight.get("arrival_airport", {}).get("name", "N/A"),
+                    flight.get("arrival_airport", {}).get("time", "N/A"),
+                    flight.get("duration", "N/A"),
+                    flight.get("airplane", "N/A"),
+                    flight.get("airline", "N/A"),
+                    flight.get("flight_number", "N/A"),
+                    flight.get("travel_class", "N/A"),
+                    flight.get("legroom", "N/A"),
+                    flight_option.get("price", "N/A"),
+                    flight_option.get("total_duration", "N/A")
+                ])
+        
+        if flights_data:
+            worksheet.append_rows(flights_data)
+            print(f"{len(flights_data)} voli salvati su Google Sheets")
+        else:
+            print("Nessun dato valido da salvare.")
     
-    flights_data = [[
-        "Departure Airport", "Departure Time", "Arrival Airport", "Arrival Time",
-        "Duration (min)", "Airplane", "Airline", "Flight Number", "Travel Class",
-        "Legroom", "Price (EUR)", "Total Duration (min)"
-    ]]
-    
-    for flight_option in results.get("other_flights", []):
-        for flight in flight_option.get("flights", []):
-            flights_data.append([
-                flight["departure_airport"]["name"],
-                flight["departure_airport"]["time"],
-                flight["arrival_airport"]["name"],
-                flight["arrival_airport"]["time"],
-                flight["duration"],
-                flight["airplane"],
-                flight["airline"],
-                flight["flight_number"],
-                flight["travel_class"],
-                flight.get("legroom", "N/A"),
-                flight_option.get("price", "N/A"),
-                flight_option.get("total_duration", "N/A")
-            ])
-    
-    worksheet.clear()
-    worksheet.update("A1", flights_data)
-    print("Dati salvati su Google Sheets")
+    except Exception as e:
+        print(f"Errore nel salvataggio su Google Sheets: {e}")
 
 if __name__ == "__main__":
     flight_results = search_flights()
